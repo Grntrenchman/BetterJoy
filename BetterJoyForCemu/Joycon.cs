@@ -655,7 +655,9 @@ namespace BetterJoyForCemu {
                 buttons[button] |= buttons[origin];
             }
         }
-        bool CaptureComboAMD =  Boolean.Parse(ConfigurationManager.AppSettings["CaptureComboAMD"]);
+        bool held1 = false;
+        bool held2 = false;
+        bool CaptureComboAMD = Boolean.Parse(ConfigurationManager.AppSettings["CaptureComboAMD"]);
         bool CaptureComboXBOX = Boolean.Parse(ConfigurationManager.AppSettings["CaptureComboXBOX"]);
         // bool CaptureComboAMD = true;
         // bool CaptureComboXBOX = false;
@@ -676,6 +678,7 @@ namespace BetterJoyForCemu {
             long timestamp = Stopwatch.GetTimestamp();
             if (HomeLongPowerOff && buttons[powerOffButton]) {
                 if ((timestamp - buttons_down_timestamp[powerOffButton]) / 10000 > 5000.0) {
+                    held2 = true;
                     if (other != null)
                         other.PowerOff();
 
@@ -686,6 +689,7 @@ namespace BetterJoyForCemu {
 
             if (CaptureComboAMD && buttons[captureButton]) {
                 if ((timestamp - buttons_down_timestamp[captureButton]) / 10000 > 2000.0) {
+                    held1 = true;
                     const string V = "162"; //CTRL
                     WindowsInput.Events.KeyCode key1 = (WindowsInput.Events.KeyCode)Int32.Parse(V);
                     const string V1 = "160"; //SHIFT
@@ -699,6 +703,7 @@ namespace BetterJoyForCemu {
 
             if (CaptureComboXBOX && buttons[captureButton]) {
                 if ((timestamp - buttons_down_timestamp[captureButton]) / 10000 > 2000.0) {
+                    held1 = true;
                     const string V = "91"; //WIN
                     WindowsInput.Events.KeyCode key1 = (WindowsInput.Events.KeyCode)Int32.Parse(V);
                     const string V1 = "164"; //ALT
@@ -722,10 +727,18 @@ namespace BetterJoyForCemu {
 
             DetectShake();
 
-            if (buttons_down[(int)Button.CAPTURE])
-                Simulate(Config.Value("capture"));
-            if (buttons_down[(int)Button.HOME])
-                Simulate(Config.Value("home"));
+            if (buttons_up[(int)Button.CAPTURE]) {
+                if (held1 == false)
+                    Simulate(Config.Value("capture"));
+                if (held1 == true)
+                    held1 = false;
+            }
+            if (buttons_up[(int)Button.HOME]) {
+                if (held2 == false)
+                    Simulate(Config.Value("home"));
+                if (held2 == true)
+                    held2 = false;
+            }
             SimulateContinous((int)Button.CAPTURE, Config.Value("capture"));
             SimulateContinous((int)Button.HOME, Config.Value("home"));
 
